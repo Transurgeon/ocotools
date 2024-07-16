@@ -62,22 +62,22 @@ class LogBar(Barrier):
 class LinLogBar(Barrier):
 
     def __init__(self, a, b):
-        super().__init__(len(a))
+        super().__init__(max(a.shape))
         self.a = a
         self.b = b
     
     def f(self, x):
-        return self.a@x-self.b
+        return self.a.dot(x.T)-self.b
     def logf(self, x):
         return -np.log(self.f(x))
     def grad(self, x):
         try:
-            return -1/(self.a.dot(x)-self.b)
+            return -1/(self.a.dot(x.T)-self.b)*self.a.T
         except:
             return sp.csr_array(x.shape)
         
     def hess(self, x):
-        return 1/(self.a.dot(x)-self.b)**2*self.a@self.a.T
+        return 1/(self.a.dot(x.T)-self.b)**2*self.a.T@self.a
     def isFeasible(self, x):
         return self.f(x) <=0
 
@@ -132,12 +132,16 @@ class BarrSum(Barrier):
         return ans
 
     def __iadd__(self, other):
-        if other.n == self.n:
-            if isinstance(other, BarrSum):
-                for func in other.fls:
-                    self.fls.append(func)
-            else:
-                self.fls.append(other)
+        if isinstance(other, Barrier):
+            if other.n == self.n:
+                if isinstance(other, BarrSum):
+                    for func in other.fls:
+                        self.fls.append(func)
+                else:
+                    self.fls.append(other)
+            return self
+        else:
+            raise TypeError('Cannot add a non-Barrier function')
 
     def __add__(self, other):
         if other.n == self.n:

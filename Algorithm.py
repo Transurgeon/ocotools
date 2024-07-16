@@ -207,8 +207,8 @@ class IPM(Algorithm):
         b = prob.getb()
         grad, H = prob.barrGradHess(self.x)
         D = sp.block_array([[H, A.T],[A, None]]) 
-        grad += prob.grad(self.x)*self.eta
-        viol = A.dot(self.x)-b
+        grad = grad + self.eta*prob.grad(self.x)
+        viol = A.dot(self.x.T)-b.T
         viol.data = np.round(viol.data, 8)
         augGrad = sp.vstack((grad, viol))
         delta = sp.linalg.spsolve(D, augGrad)
@@ -225,6 +225,9 @@ class IPM(Algorithm):
         self.eta *= beta
         return self.update(prob)
     
+    def setX(self, x):
+        self.x = x
+    
 class IPMDamped(IPM):
 
     def update2(self, prob):
@@ -239,6 +242,33 @@ class IPMDamped(IPM):
         norm = augGrad.T@delta
         count = 0
         while(not prob.getSOCPBarr().isFeasible(self.x - delta[:self.n])):
+            delta *= 0.8
+            count += 1
+        print(norm, count)
+        self.x -= delta[:self.n]
+        self.lamda = delta[self.n:]
+        return self.x
+
+    def etaUpdate(self, prob, beta=1.02):
+        self.update2(prob)
+        self.eta *= beta
+        return self.update2(prob)
+    
+class IPMFeasible(IPM):
+
+    def update2(self, prob):
+        A = prob.getA()
+        b = prob.getb()
+        grad, H = prob.barrGradHess(self.x)
+        D = sp.block_array([[H, A.T],[A, None]]) 
+        grad = grad + self.eta*prob.grad(self.x)
+        viol = A.dot(self.x.T)-b.T
+        viol.data = np.round(viol.data, 8)
+        augGrad = sp.vstack((grad, viol))
+        delta = sp.linalg.spsolve(D, augGrad)
+        norm = augGrad.T.dot(delta)
+        count = 0
+        while(not prob.barr.isFeasible(self.x - delta[:self.n])):
             delta *= 0.8
             count += 1
         print(norm, count)

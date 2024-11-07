@@ -3,19 +3,19 @@ import cvxpy as cp
 from Barrier import *
 
 class Problem:
-
-    def __init__(self, f=None, grad=None):
+    """
+    An OCO problem. Gives access to the function value, gradient and Hessian at any point in its domain.
+    Some have built-in update functions that represent the time-varying element of the problem.
+    """
+    def __init__(self, f: cp.Objective, grad):
         self.f = f
         self.grad = grad
 
     def increment(self):
         pass
+
     def optimal(self):
         pass
-    def setF(self, f):
-        self.f = f
-    def setGrad(self, grad):
-        self.grad = grad
 
 
 class LinConsProblem(Problem):
@@ -54,7 +54,6 @@ class LinearProgram(LinConsProblem):
         self.c = np.zeros((1, n)) if c is None else c
         self.grad = self.gradfunc
         self.f = self.func
-    
 
     def getC(self):
         return self.C
@@ -110,12 +109,6 @@ class OCOMPC(LinearProgram):
     def barrGradHess(self, x):
         return self.barr.grad(x), self.barr.hess(x)
 
-    
-    
-        
-
-           
-
 def sigmoid(x):
     return 1/(1+np.e**-(x))
 
@@ -124,8 +117,6 @@ def sigmoidGrad(x):
 
 def sigmoidHess(x):
     return np.e**(-x)*(2*np.e**(-x)*sigmoid(x)**3)-sigmoidGrad(x)
-
-
 
 class NetFlow(LinConsProblem):
 
@@ -211,7 +202,6 @@ class ConvNetFlow(LinConsProblem):
     def increment(self):
         self.randomIncrement()
 
-
 class ExpNetFlow(LinConsProblem):
 
     def __init__(self, n=1):
@@ -262,8 +252,6 @@ class ExpNetFlow(LinConsProblem):
 
     def increment(self):
         self.subIncrement()
-
-
 
 class QLCP(Problem):
 

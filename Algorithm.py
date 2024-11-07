@@ -5,7 +5,10 @@ import scipy.sparse as sp
 from ocotools.Problem import ConvNetFlow, ExpNetFlow
 
 class Algorithm:
-
+    """
+    An OCO algorithm. Is instantiated with the number of dimensions and (optional) hyper-parameters.
+    Must implement the $\text{update}$ function which does its OCO update.
+    """
     def __init__(self, n):
         self.n = n
         self.x = sp.csr_array((n,1))

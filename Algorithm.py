@@ -315,20 +315,3 @@ class LinFunction(Function):
     def grad(self, x):
         return self.a*self.func.grad(self.a*x+self.b)
 
-    
-
-
-
-
-
-
-
-
-
-
-            
-
-
-        
-
-
